@@ -8,7 +8,7 @@ import {
 } from './schemas/shared';
 import { NotS3FileItem } from './utils/errors';
 
-interface GraaspS3FileItemOptions {
+export interface GraaspS3FileItemOptions {
   s3Region: string,
   s3Bucket: string,
   s3AccessKeyId: string,
