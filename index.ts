@@ -17,7 +17,7 @@ export interface GraaspS3FileItemOptions {
   s3Expiration?: number
 }
 
-interface S3FileItemExtra extends UnknownExtra {
+export interface S3FileItemExtra extends UnknownExtra {
   s3File: {
     name: string,
     key: string,
