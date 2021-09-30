@@ -7,7 +7,9 @@
   "scripts": {
     "build": "tsc",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "prettier:check": "prettier --check \"{src,test}/**/*.ts\"",
+    "prettier:write": "prettier --write \"{src,test}/**/*.ts\""
   },
   "repository": {
     "type": "git",
@@ -22,11 +24,14 @@
   "homepage": "https://github.com/graasp/graasp-s3-file-item#readme",
   "dependencies": {
     "aws-sdk": "^2.793.0",
-    "graasp-file-upload-limiter": "git://github.com/graasp/graasp-file-upload-limiter#main"
+    "eslint-config-prettier": "^8.3.0",
+    "graasp": "github:graasp/graasp#72/refactorTasksAndTests",
+    "graasp-file-upload-limiter": "git://github.com/graasp/graasp-file-upload-limiter#main",
+    "prettier": "^2.4.1"
   },
   "devDependencies": {
     "@types/eslint": "^7.2.5",
-    "@types/graasp": "git://github.com/graasp/graasp-types.git#master",
+    "@types/graasp": "git://github.com/graasp/graasp-types.git#1/refactor-tasks",
     "@types/node": "^14.14.7",
     "@typescript-eslint/eslint-plugin": "^4.7.0",
     "@typescript-eslint/parser": "^4.7.0",

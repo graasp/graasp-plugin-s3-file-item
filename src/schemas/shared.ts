@@ -2,25 +2,22 @@ const upload = {
   querystring: {
     type: 'object',
     properties: {
-      parentId: { $ref: 'http://graasp.org/#/definitions/uuid' }
+      parentId: { $ref: 'http://graasp.org/#/definitions/uuid' },
     },
-    additionalProperties: false
+    additionalProperties: false,
   },
   body: {
     type: 'object',
     required: ['filename'],
     properties: {
-      filename: { type: 'string' }
+      filename: { type: 'string' },
     },
-    additionalProperties: false
-  }
+    additionalProperties: false,
+  },
 };
 
 const getMetadata = {
   params: { $ref: 'http://graasp.org/#/definitions/idParam' },
 };
 
-export {
-  upload,
-  getMetadata
-};
+export { upload, getMetadata };
