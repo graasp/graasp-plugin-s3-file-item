@@ -5,7 +5,6 @@ import S3 from 'aws-sdk/clients/s3';
 import { upload as uploadSchema, getMetadata as getMetadataSchema } from './schemas/shared';
 import { NotS3FileItem } from './utils/errors';
 
-
 interface GraaspS3FileItemOptions {
   s3Region: string;
   s3Bucket: string;
@@ -13,6 +12,7 @@ interface GraaspS3FileItemOptions {
   s3SecretAccessKey: string;
   s3UseAccelerateEndpoint?: boolean;
   s3Expiration?: number;
+  s3Instance?: S3;
 }
 
 interface S3FileItemExtra extends UnknownExtra {
@@ -34,7 +34,7 @@ interface S3UploadBody {
   filename: string;
 }
 
-const ITEM_TYPE = 's3File';
+export const ITEM_TYPE = 's3File';
 const ORIGINAL_FILENAME_TRUNCATE_LIMIT = 100;
 const randomHexOf4 = () => ((Math.random() * (1 << 16)) | 0).toString(16).padStart(4, '0');
 
@@ -46,6 +46,7 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
     s3SecretAccessKey: secretAccessKey,
     s3UseAccelerateEndpoint: useAccelerateEndpoint = false,
     s3Expiration: expiration = 60, // 1 minute,
+    s3Instance,
   } = options;
   const {
     items: { taskManager },
@@ -60,11 +61,13 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
   // TODO: a Cache-Control policy is missing and
   // it's necessary to check how that policy is kept while copying
   // also: https://www.aaronfagan.ca/blog/2017/how-to-configure-aws-lambda-to-automatically-set-cache-control-headers-on-s3-objects/
-  const s3 = new S3({
-    region,
-    useAccelerateEndpoint,
-    credentials: { accessKeyId, secretAccessKey },
-  }); // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html
+  const s3 =
+    s3Instance ??
+    new S3({
+      region,
+      useAccelerateEndpoint,
+      credentials: { accessKeyId, secretAccessKey },
+    }); // https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html
 
   // register post delete handler to remove the s3 file object after item delete
   const deleteItemTaskName = taskManager.getDeleteTaskName();
@@ -76,7 +79,6 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
         extra: { s3File },
       } = item;
       if (itemType !== ITEM_TYPE || !s3File) return;
-
       const { key } = s3File;
       const params: S3.HeadObjectRequest = { Bucket: bucket, Key: key };
       s3.deleteObject(params)
@@ -134,10 +136,9 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
         type: ITEM_TYPE,
         extra: { s3File: { name: filename, key } },
       };
-
       // create item
       const task = taskManager.createCreateTaskSequence(member, itemData, parentId);
-      const item = await runner.runSingleSequence(task, log) as Item;
+      const item = (await runner.runSingleSequence(task, log)) as Item;
 
       // add member and item info to S3 object metadata
       const metadata = { member: member.id, item: item.id };
@@ -171,7 +172,7 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
     { schema: getMetadataSchema },
     async ({ member, params: { id }, log }) => {
       const task = taskManager.createGetTaskSequence(member, id);
-      const item = await runner.runSingleSequence(task, log) as Item<S3FileItemExtra>;
+      const item = (await runner.runSingleSequence(task, log)) as Item<S3FileItemExtra>;
       const { s3File } = item.extra;
 
       if (!s3File) throw new NotS3FileItem(id);
@@ -191,12 +192,11 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
         log.error(error, 'graasp-s3-file-item: failed to get s3 object metadata');
         throw error;
       }
-
       const tasks = taskManager.createUpdateTaskSequence(member, id, itemData);
+
       const {
         extra: { s3File: metadata },
-      } = await runner.runSingleSequence(tasks, log) as Item<S3FileItemExtra>;
-
+      } = (await runner.runSingleSequence(tasks, log)) as Item<S3FileItemExtra>;
       return metadata;
     },
   );
