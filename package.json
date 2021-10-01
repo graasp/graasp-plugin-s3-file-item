@@ -1,5 +1,5 @@
 {
-  "name": "graasp-s3-file-item",
+  "name": "graasp-plugin-s3-file-item",
   "version": "0.1.0",
   "description": "",
   "main": "dist/index.js",
@@ -14,15 +14,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/graasp/graasp-s3-file-item.git"
+    "url": "git+https://github.com/graasp/graasp-plugin-s3-file-item.git"
   },
   "keywords": [],
   "author": "Graasp Association",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/graasp/graasp-s3-file-item/issues"
+    "url": "https://github.com/graasp/graasp-plugin-s3-file-item/issues"
   },
-  "homepage": "https://github.com/graasp/graasp-s3-file-item#readme",
+  "homepage": "https://github.com/graasp/graasp-plugin-s3-file-item#readme",
   "dependencies": {
     "aws-sdk": "^2.793.0",
     "graasp-file-upload-limiter": "git://github.com/graasp/graasp-file-upload-limiter#main",
