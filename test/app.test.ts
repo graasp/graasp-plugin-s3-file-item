@@ -1,17 +1,16 @@
 import S3 from 'aws-sdk/clients/s3';
+import {TaskManager, TaskRunner} from 'graasp-test';
 import { Request, Service } from 'aws-sdk';
 import { StatusCodes } from 'http-status-codes';
 import { GRAASP_ACTOR, ITEM_FILE, ITEM_FILE_WITH_METADATA, ITEM_FOLDER, PLUGIN_OPTIONS } from './constants';
-import Runner from './mocks/taskRunner';
 import build from './app';
 import { ITEM_TYPE } from '../src';
-import TaskManager from './mocks/taskManager';
 import { NotS3FileItem } from '../src/utils/errors';
 import { mockCreateTaskSequence, mockGetTaskSequence, mockUpdateTaskSequence } from './mocks';
 
 let s3Instance;
 const taskManager = new TaskManager();
-const runner = new Runner();
+const runner = new TaskRunner();
 
 describe('Plugin Tests', () => {
 
