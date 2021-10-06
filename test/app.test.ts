@@ -1,8 +1,14 @@
 import S3 from 'aws-sdk/clients/s3';
-import {TaskManager, TaskRunner} from 'graasp-test';
+import { TaskManager, TaskRunner } from 'graasp-test';
 import { Request, Service } from 'aws-sdk';
 import { StatusCodes } from 'http-status-codes';
-import { GRAASP_ACTOR, ITEM_FILE, ITEM_FILE_WITH_METADATA, ITEM_FOLDER, PLUGIN_OPTIONS } from './constants';
+import {
+  GRAASP_ACTOR,
+  ITEM_FILE,
+  ITEM_FILE_WITH_METADATA,
+  ITEM_FOLDER,
+  PLUGIN_OPTIONS,
+} from './constants';
 import build from './app';
 import { ITEM_TYPE } from '../src';
 import { NotS3FileItem } from '../src/utils/errors';
@@ -13,67 +19,11 @@ const taskManager = new TaskManager();
 const runner = new TaskRunner();
 
 describe('Plugin Tests', () => {
-
   beforeEach(() => {
     jest.clearAllMocks();
     s3Instance = new S3();
   });
 
-  describe('Copy Pre Hook Handler', () => {
-
-    it('Copy corresponding file on copy task', async () => {
-      jest.spyOn(runner, 'setTaskPreHookHandler').mockImplementation(async (name, fn) => {
-        if (name === taskManager.getDeleteTaskName()) {
-          const item = ITEM_FILE;
-          const actor = GRAASP_ACTOR;
-          s3Instance.copyObject = jest.fn().mockImplementation(() => ({ promise: jest.fn() }));
-          await fn(item, actor, { log: undefined });
-          expect(s3Instance.copyObject).toHaveBeenCalled();
-        }
-      });
-
-      await build({ taskManager, runner, options: { s3Instance, ...PLUGIN_OPTIONS } });
-    });
-
-    it('Does nothing if item is not an s3file', async () => {
-      jest.spyOn(runner, 'setTaskPreHookHandler').mockImplementation(async (name, fn) => {
-        if (name === taskManager.getDeleteTaskName()) {
-          const item = ITEM_FOLDER;
-          const actor = GRAASP_ACTOR;
-          s3Instance.copyObject = jest.fn().mockImplementation(() => ({ promise: jest.fn() }));
-          await fn(item, actor, { log: undefined });
-          expect(s3Instance.copyObject).not.toHaveBeenCalled();
-        }
-      });
-      await build({ taskManager, runner, options: { s3Instance, ...PLUGIN_OPTIONS } });
-    });
-  });
-
-  describe('Delete Post Hook Handler', () => {
-    it('Delete corresponding file on delete task', async () => {
-      jest.spyOn(runner, 'setTaskPostHookHandler').mockImplementation((_name, fn) => {
-        const item = ITEM_FILE;
-        const actor = GRAASP_ACTOR;
-        s3Instance.deleteObject = jest.fn().mockImplementation(() => ({ promise: jest.fn().mockImplementation(() => ({ catch: jest.fn() })) }));
-        fn(item, actor, { log: undefined, });
-        expect(s3Instance.deleteObject).toHaveBeenCalled();
-      });
-
-      await build({ taskManager, runner, options: { s3Instance, ...PLUGIN_OPTIONS } });
-    });
-
-    it('Does nothing if item is not an s3file', async () => {
-      jest.spyOn(runner, 'setTaskPostHookHandler').mockImplementation((_name, fn) => {
-        const item = ITEM_FOLDER;
-        const actor = GRAASP_ACTOR;
-        s3Instance.deleteObject = jest.fn().mockImplementation(() => ({ promise: jest.fn().mockImplementation(() => ({ catch: jest.fn() })) }));
-        fn(item, actor, { log: undefined });
-        expect(s3Instance.deleteObject).not.toHaveBeenCalled();
-      });
-
-      await build({ taskManager, runner, options: { s3Instance, ...PLUGIN_OPTIONS } });
-    });
-  });
 
   describe('Options', () => {
     it('Missing a parameter should throw', async () => {
@@ -129,7 +79,6 @@ describe('Plugin Tests', () => {
   });
 
   describe('POST /s3-upload', () => {
-
     it('Successfully get S3 upload URL', async () => {
       const app = await build({ taskManager, runner });
       const item = ITEM_FILE;
@@ -270,7 +219,9 @@ describe('Plugin Tests', () => {
 
       // mock s3 call, it throws an error
       const error = 'this is a s3 error';
-      s3Instance.headObject = jest.fn().mockImplementation(() => ({ promise: jest.fn().mockRejectedValue(new Error(error)) }));
+      s3Instance.headObject = jest
+        .fn()
+        .mockImplementation(() => ({ promise: jest.fn().mockRejectedValue(new Error(error)) }));
 
       const app = await build({ taskManager, runner, options: { s3Instance, ...PLUGIN_OPTIONS } });
 
@@ -286,4 +237,69 @@ describe('Plugin Tests', () => {
     });
   });
 
+  describe('Copy Pre Hook Handler', () => {
+    it('Copy corresponding file on copy task', async () => {
+      jest.spyOn(runner, 'setTaskPreHookHandler').mockImplementation(async (name, fn) => {
+        if (name === taskManager.getCopyTaskName()) {
+          const item = ITEM_FILE;
+          const actor = GRAASP_ACTOR;
+          s3Instance.copyObject = jest.fn().mockImplementation(() => ({ promise: jest.fn() }));
+          await fn(item, actor, { log: undefined });
+          expect(s3Instance.copyObject).toHaveBeenCalled();
+        }
+      });
+      await build({ taskManager, runner, options: { s3Instance, ...PLUGIN_OPTIONS } });
+    });
+
+    it('Does nothing if item is not an s3file', async () => {
+      jest.spyOn(runner, 'setTaskPreHookHandler').mockImplementation(async (name, fn) => {
+        if (name === taskManager.getCopyTaskName()) {
+          const item = ITEM_FOLDER;
+          const actor = GRAASP_ACTOR;
+          s3Instance.copyObject = jest.fn().mockImplementation(() => ({ promise: jest.fn() }));
+          await fn(item, actor, { log: undefined });
+          expect(s3Instance.copyObject).not.toHaveBeenCalled();
+        }
+      });
+      await build({ taskManager, runner, options: { s3Instance, ...PLUGIN_OPTIONS } });
+    });
+  });
+
+  describe('Delete Post Hook Handler', () => {
+    it('Delete corresponding file on delete task', async () => {
+      jest.spyOn(runner, 'setTaskPostHookHandler').mockImplementation((name, fn) => {
+        if (name === taskManager.getDeleteTaskName()) {
+          const item = ITEM_FILE;
+          const actor = GRAASP_ACTOR;
+          s3Instance.deleteObject = jest
+            .fn()
+            .mockImplementation(() => ({
+              promise: jest.fn().mockImplementation(() => ({ catch: jest.fn() })),
+            }));
+          fn(item, actor, { log: undefined });
+          expect(s3Instance.deleteObject).toHaveBeenCalled();
+        }
+      });
+
+      await build({ taskManager, runner, options: { s3Instance, ...PLUGIN_OPTIONS } });
+    });
+
+    it('Does nothing if item is not an s3file', async () => {
+      jest.spyOn(runner, 'setTaskPostHookHandler').mockImplementation((name, fn) => {
+        if (name === taskManager.getDeleteTaskName()) {
+          const item = ITEM_FOLDER;
+          const actor = GRAASP_ACTOR;
+          s3Instance.deleteObject = jest
+            .fn()
+            .mockImplementation(() => ({
+              promise: jest.fn().mockImplementation(() => ({ catch: jest.fn() })),
+            }));
+          fn(item, actor, { log: undefined });
+          expect(s3Instance.deleteObject).not.toHaveBeenCalled();
+        }
+      });
+
+      await build({ taskManager, runner, options: { s3Instance, ...PLUGIN_OPTIONS } });
+    });
+  });
 });
