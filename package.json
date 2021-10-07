@@ -9,7 +9,7 @@
     "prepare": "npm run build",
     "prettier:check": "prettier --check \"{src,test}/**/*.ts\"",
     "prettier:write": "prettier --write \"{src,test}/**/*.ts\"",
-    "test": "jest test --forceExit --coverage --verbose",
+    "test": "jest --forceExit --coverage --verbose",
     "test:watch": "npm run test -- --watchAll"
   },
   "repository": {
@@ -30,7 +30,7 @@
   },
   "devDependencies": {
     "@types/eslint": "^7.2.5",
-    "@types/graasp": "git://github.com/graasp/graasp-types.git#1/refactor-tasks",
+    "@types/graasp": "git://github.com/graasp/graasp-types.git#master",
     "@types/jest": "^27.0.2",
     "@types/node": "^14.14.7",
     "@typescript-eslint/eslint-plugin": "^4.7.0",
@@ -38,7 +38,7 @@
     "eslint": "^7.13.0",
     "eslint-config-prettier": "^8.3.0",
     "fastify": "^3.8.0",
-    "graasp-test": "git://github.com/graasp/graasp-test#1/init",
+    "graasp-test": "git://github.com/graasp/graasp-test#main",
     "jest": "^27.2.4",
     "prettier": "^2.4.1",
     "ts-jest": "^27.0.5",
