@@ -18,12 +18,19 @@ let s3Instance;
 const taskManager = new TaskManager();
 const runner = new TaskRunner();
 
+// todo: mock graasp-file-upload-limiter to avoid conflict in copy posthook
+// this needs the module options type
+// jest.spyOn(graaspFileUploadLimiter, 'default').mockImplementation(
+//   async (_instance:FastifyInstance, _opts: GraaspFileUploadLimiterOptions, done) => {
+//   done();
+// })
+
+
 describe('Plugin Tests', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     s3Instance = new S3();
   });
-
 
   describe('Options', () => {
     it('Missing a parameter should throw', async () => {
@@ -271,11 +278,9 @@ describe('Plugin Tests', () => {
         if (name === taskManager.getDeleteTaskName()) {
           const item = ITEM_FILE;
           const actor = GRAASP_ACTOR;
-          s3Instance.deleteObject = jest
-            .fn()
-            .mockImplementation(() => ({
-              promise: jest.fn().mockImplementation(() => ({ catch: jest.fn() })),
-            }));
+          s3Instance.deleteObject = jest.fn().mockImplementation(() => ({
+            promise: jest.fn().mockImplementation(() => ({ catch: jest.fn() })),
+          }));
           fn(item, actor, { log: undefined });
           expect(s3Instance.deleteObject).toHaveBeenCalled();
         }
@@ -289,11 +294,9 @@ describe('Plugin Tests', () => {
         if (name === taskManager.getDeleteTaskName()) {
           const item = ITEM_FOLDER;
           const actor = GRAASP_ACTOR;
-          s3Instance.deleteObject = jest
-            .fn()
-            .mockImplementation(() => ({
-              promise: jest.fn().mockImplementation(() => ({ catch: jest.fn() })),
-            }));
+          s3Instance.deleteObject = jest.fn().mockImplementation(() => ({
+            promise: jest.fn().mockImplementation(() => ({ catch: jest.fn() })),
+          }));
           fn(item, actor, { log: undefined });
           expect(s3Instance.deleteObject).not.toHaveBeenCalled();
         }
