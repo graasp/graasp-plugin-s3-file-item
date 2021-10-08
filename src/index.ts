@@ -196,7 +196,7 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
   };
 
   // export for public usage
-  fastify.decorate('S3FilePluginGetMetadata', getMetadata);
+  fastify.decorate('s3FilePluginGetMetadata', getMetadata);
 
   // get (and update) s3 file item metadata - item's 'extra'
   fastify.get<{ Params: IdParam }>(
