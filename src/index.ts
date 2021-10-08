@@ -15,7 +15,7 @@ export interface GraaspS3FileItemOptions {
   s3Instance?: S3;
 }
 
-interface S3FileItemExtra extends UnknownExtra {
+export interface S3FileItemExtra extends UnknownExtra {
   s3File: {
     name: string;
     key: string;
@@ -37,6 +37,36 @@ interface S3UploadBody {
 export const ITEM_TYPE = 's3File';
 const ORIGINAL_FILENAME_TRUNCATE_LIMIT = 100;
 const randomHexOf4 = () => ((Math.random() * (1 << 16)) | 0).toString(16).padStart(4, '0');
+
+
+export const getMetadata = async ({ item, itemTaskManager, runner, s3, bucket }, member, log): Promise<S3FileItemExtra> => {
+  const { id } = item;
+  const { s3File } = item.extra;
+
+  if (!s3File) throw new NotS3FileItem(id);
+
+  const { size, contenttype, key } = s3File;
+  if ((size === 0 || size) && contenttype) return s3File;
+
+  let itemData: Partial<Item<S3FileItemExtra>>;
+  const params: S3.HeadObjectRequest = { Bucket: bucket, Key: key };
+
+  try {
+    const { ContentLength: cL, ContentType: cT } = await s3.headObject(params).promise();
+    itemData = {
+      extra: { s3File: Object.assign(s3File, { size: cL, contenttype: cT }) },
+    };
+  } catch (error) {
+    log.error(error, 'graasp-s3-file-item: failed to get s3 object metadata');
+    throw error;
+  }
+  const tasks = itemTaskManager.createUpdateTaskSequence(member, id, itemData);
+
+  const {
+    extra
+  } = (await runner.runSingleSequence(tasks, log)) as Item<S3FileItemExtra>;
+  return extra;
+};
 
 const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, options) => {
   const {
@@ -166,37 +196,6 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
     },
   );
 
-  const getMetadata = async (item, member, log) => {
-    const { id } = item;
-    const { s3File } = item.extra;
-
-    if (!s3File) throw new NotS3FileItem(id);
-
-    const { size, contenttype, key } = s3File;
-    if ((size === 0 || size) && contenttype) return s3File;
-
-    let itemData: Partial<Item<S3FileItemExtra>>;
-    const params: S3.HeadObjectRequest = { Bucket: bucket, Key: key };
-
-    try {
-      const { ContentLength: cL, ContentType: cT } = await s3.headObject(params).promise();
-      itemData = {
-        extra: { s3File: Object.assign(s3File, { size: cL, contenttype: cT }) },
-      };
-    } catch (error) {
-      log.error(error, 'graasp-s3-file-item: failed to get s3 object metadata');
-      throw error;
-    }
-    const tasks = taskManager.createUpdateTaskSequence(member, id, itemData);
-
-    const {
-      extra: { s3File: metadata },
-    } = (await runner.runSingleSequence(tasks, log)) as Item<S3FileItemExtra>;
-    return metadata;
-  };
-
-  // export for public usage
-  fastify.decorate('s3FilePluginGetMetadata', getMetadata);
 
   // get (and update) s3 file item metadata - item's 'extra'
   fastify.get<{ Params: IdParam }>(
@@ -205,7 +204,7 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
     async ({ member, params: { id }, log }) => {
       const task = taskManager.createGetTaskSequence(member, id);
       const item = (await runner.runSingleSequence(task, log)) as Item<S3FileItemExtra>;
-      const metadata = await getMetadata(item, member, log);
+      const { s3File: metadata } = await getMetadata({ item, runner, itemTaskManager: taskManager, s3, bucket }, member, log);
       return metadata;
     },
   );
