@@ -3,8 +3,8 @@ import { ItemTaskManager, TaskRunner } from 'graasp-test';
 import { StatusCodes } from 'http-status-codes';
 import { GRAASP_ACTOR, ITEM_FILE, ITEM_FOLDER, PLUGIN_OPTIONS } from './constants';
 import build from './app';
-import { ITEM_TYPE } from '../src';
 import { mockCreateTaskSequence, mockGetTaskSequence } from './mocks';
+import { ITEM_TYPE } from '../src/plugin';
 
 let s3Instance;
 const taskManager = new ItemTaskManager();
