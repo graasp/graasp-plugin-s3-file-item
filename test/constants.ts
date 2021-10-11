@@ -1,6 +1,6 @@
 import { v4 } from 'uuid';
 import { Actor, Item } from 'graasp';
-import { ITEM_TYPE } from '../src';
+import { ITEM_TYPE } from '../src/plugin';
 
 export const ROOT_PATH = './test/files';
 export const FILE_PATHS = ['./test/files/1.txt', './test/files/2.pdf'];
@@ -24,7 +24,7 @@ export const ITEM_FILE_WITH_METADATA: Partial<Item> = {
       path: '1.txt',
       size: 1594447,
       key: 'key',
-      contenttype: 'contenttype'
+      contenttype: 'contenttype',
     },
   },
 };

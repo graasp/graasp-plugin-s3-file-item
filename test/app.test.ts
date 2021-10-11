@@ -1,21 +1,13 @@
 import S3 from 'aws-sdk/clients/s3';
-import { TaskManager, TaskRunner } from 'graasp-test';
-import { Request, Service } from 'aws-sdk';
+import { ItemTaskManager, TaskRunner } from 'graasp-test';
 import { StatusCodes } from 'http-status-codes';
-import {
-  GRAASP_ACTOR,
-  ITEM_FILE,
-  ITEM_FILE_WITH_METADATA,
-  ITEM_FOLDER,
-  PLUGIN_OPTIONS,
-} from './constants';
+import { GRAASP_ACTOR, ITEM_FILE, ITEM_FOLDER, PLUGIN_OPTIONS } from './constants';
 import build from './app';
 import { ITEM_TYPE } from '../src';
-import { NotS3FileItem } from '../src/utils/errors';
-import { mockCreateTaskSequence, mockGetTaskSequence, mockUpdateTaskSequence } from './mocks';
+import { mockCreateTaskSequence, mockGetTaskSequence } from './mocks';
 
 let s3Instance;
-const taskManager = new TaskManager();
+const taskManager = new ItemTaskManager();
 const runner = new TaskRunner();
 
 // todo: mock graasp-file-upload-limiter to avoid conflict in copy posthook
@@ -24,7 +16,6 @@ const runner = new TaskRunner();
 //   async (_instance:FastifyInstance, _opts: GraaspFileUploadLimiterOptions, done) => {
 //   done();
 // })
-
 
 describe('Plugin Tests', () => {
   beforeEach(() => {
@@ -86,6 +77,11 @@ describe('Plugin Tests', () => {
   });
 
   describe('POST /s3-upload', () => {
+    beforeEach(() => {
+      jest.spyOn(runner, 'setTaskPostHookHandler').mockReturnValue();
+      jest.spyOn(runner, 'setTaskPreHookHandler').mockReturnValue();
+    });
+
     it('Successfully get S3 upload URL', async () => {
       const app = await build({ taskManager, runner });
       const item = ITEM_FILE;
@@ -159,17 +155,14 @@ describe('Plugin Tests', () => {
 
   describe('GET /s3-metadata', () => {
     beforeEach(() => {
-      jest.clearAllMocks();
+      jest.spyOn(runner, 'setTaskPostHookHandler').mockReturnValue();
+      jest.spyOn(runner, 'setTaskPreHookHandler').mockReturnValue();
     });
 
     it('Successfully get S3 upload URL', async () => {
       const item = ITEM_FILE;
 
       mockGetTaskSequence(item);
-      const mockUpdateTask = mockUpdateTaskSequence(item);
-
-      // mock s3 call, it returns anything
-      s3Instance.headObject = jest.fn(() => new Request(new Service(), 'string'));
 
       const app = await build({ taskManager, runner, options: { s3Instance, ...PLUGIN_OPTIONS } });
 
@@ -180,67 +173,7 @@ describe('Plugin Tests', () => {
       });
 
       expect(res.statusCode).toBe(StatusCodes.OK);
-      expect(mockUpdateTask).toHaveBeenCalled();
-      // since size and contenttype are indefined, the return value is empty
-    });
-
-    it('Does not update if item already has metadata', async () => {
-      const item = ITEM_FILE_WITH_METADATA;
-
-      mockGetTaskSequence(item);
-      const mockUpdateTask = mockUpdateTaskSequence(item);
-
-      const app = await build({ taskManager, runner, options: { s3Instance, ...PLUGIN_OPTIONS } });
-
-      const res = await app.inject({
-        method: 'GET',
-        url: `${item.id}/s3-metadata`,
-        payload: { filename: item.name },
-      });
-      const response = res.json();
-      expect(response).toMatchObject(item.extra.s3File);
-      expect(mockUpdateTask).not.toHaveBeenCalled();
-      expect(res.statusCode).toBe(StatusCodes.OK);
-    });
-
-    it('Throw if item is not a s3file', async () => {
-      const item = ITEM_FOLDER;
-
-      mockGetTaskSequence(item);
-      const app = await build({ taskManager, runner });
-
-      const res = await app.inject({
-        method: 'GET',
-        url: `${item.id}/s3-metadata`,
-        payload: { filename: item.name },
-      });
-
-      const response = res.json();
-      expect(response).toEqual(new NotS3FileItem(item.id));
-    });
-
-    it('Throw if s3 throws an error', async () => {
-      const item = ITEM_FILE;
-
-      mockGetTaskSequence(item);
-
-      // mock s3 call, it throws an error
-      const error = 'this is a s3 error';
-      s3Instance.headObject = jest
-        .fn()
-        .mockImplementation(() => ({ promise: jest.fn().mockRejectedValue(new Error(error)) }));
-
-      const app = await build({ taskManager, runner, options: { s3Instance, ...PLUGIN_OPTIONS } });
-
-      const res = await app.inject({
-        method: 'GET',
-        url: `${item.id}/s3-metadata`,
-        payload: { filename: item.name },
-      });
-
-      const response = res.json();
-      expect(response.message).toEqual(error);
-      expect(res.statusCode).toEqual(StatusCodes.INTERNAL_SERVER_ERROR);
+      // since size and contenttype are indefined, the return value is meaningless
     });
   });
 
