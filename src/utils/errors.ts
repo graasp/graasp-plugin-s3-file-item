@@ -2,7 +2,7 @@ import { GraaspErrorDetails, GraaspError } from 'graasp';
 
 export class GraaspS3FileItemError implements GraaspError {
   name: string;
-  code: string
+  code: string;
   message: string;
   statusCode?: number;
   data?: unknown;
