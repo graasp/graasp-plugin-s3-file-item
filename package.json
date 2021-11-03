@@ -25,12 +25,12 @@
   "homepage": "https://github.com/graasp/graasp-plugin-s3-file-item#readme",
   "dependencies": {
     "aws-sdk": "^2.793.0",
-    "graasp-file-upload-limiter": "git://github.com/graasp/graasp-file-upload-limiter#main",
+    "graasp-file-upload-limiter": "github:graasp/graasp-file-upload-limiter",
     "http-status-codes": "^2.1.4"
   },
   "devDependencies": {
     "@types/eslint": "^7.2.5",
-    "@types/graasp": "git://github.com/graasp/graasp-types.git#master",
+    "@types/graasp": "github:graasp/graasp-types",
     "@types/jest": "^27.0.2",
     "@types/node": "^14.14.7",
     "@typescript-eslint/eslint-plugin": "^4.7.0",
@@ -38,7 +38,7 @@
     "eslint": "^7.13.0",
     "eslint-config-prettier": "^8.3.0",
     "fastify": "^3.8.0",
-    "graasp-test": "git://github.com/graasp/graasp-test#main",
+    "graasp-test": "github:graasp/graasp-test",
     "jest": "^27.2.4",
     "prettier": "^2.4.1",
     "ts-jest": "^27.0.5",
