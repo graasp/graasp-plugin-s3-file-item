@@ -1,5 +1,6 @@
 import S3 from 'aws-sdk/clients/s3';
 import { ItemTaskManager, TaskRunner } from 'graasp-test';
+import * as graaspFileUploadLimiterModule from 'graasp-file-upload-limiter';
 import { StatusCodes } from 'http-status-codes';
 import { GRAASP_ACTOR, ITEM_FILE, ITEM_FOLDER, PLUGIN_OPTIONS } from './constants';
 import build from './app';
@@ -10,12 +11,12 @@ let s3Instance;
 const taskManager = new ItemTaskManager();
 const runner = new TaskRunner();
 
-// todo: mock graasp-file-upload-limiter to avoid conflict in copy posthook
-// this needs the module options type
-// jest.spyOn(graaspFileUploadLimiter, 'default').mockImplementation(
-//   async (_instance:FastifyInstance, _opts: GraaspFileUploadLimiterOptions, done) => {
-//   done();
-// })
+// Mock graasp-file-upload-limiter to avoid conflict in copy posthook
+jest.spyOn(graaspFileUploadLimiterModule, 'default').mockImplementation(
+  async () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const a = 1;
+  });
 
 describe('Plugin Tests', () => {
   beforeEach(() => {
@@ -178,6 +179,11 @@ describe('Plugin Tests', () => {
   });
 
   describe('Copy Pre Hook Handler', () => {
+
+    beforeEach(() => {
+      jest.spyOn(runner, 'setTaskPostHookHandler').mockImplementation(async () => true);
+    });
+
     it('Copy corresponding file on copy task', async () => {
       jest.spyOn(runner, 'setTaskPreHookHandler').mockImplementation(async (name, fn) => {
         if (name === taskManager.getCopyTaskName()) {
