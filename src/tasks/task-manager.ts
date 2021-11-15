@@ -1,4 +1,4 @@
-import { Actor, ItemService, Member, Task } from 'graasp';
+import { Actor, ItemService, Task } from 'graasp';
 import S3 from 'aws-sdk/clients/s3';
 import { S3FileItemTaskManager } from '../interfaces/s3-file-item-task-manager';
 import GetMetadataFromItemTask, {
@@ -22,7 +22,7 @@ export class TaskManager implements S3FileItemTaskManager<Actor> {
   }
 
   createGetMetadataFromItemTask(
-    member: Member,
+    member: Actor,
     input?: GetMetadataFromItemTaskInputType,
   ): Task<Actor, unknown> {
     return new GetMetadataFromItemTask(

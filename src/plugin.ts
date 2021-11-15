@@ -1,14 +1,21 @@
 import { FastifyPluginAsync } from 'fastify';
-import { IdParam, Item, ParentIdParam } from 'graasp';
+import { IdParam, Item, Member, ParentIdParam } from 'graasp';
 import graaspFileUploadLimiter from 'graasp-file-upload-limiter';
 import S3 from 'aws-sdk/clients/s3';
 import { upload as uploadSchema, getMetadata as getMetadataSchema } from './schemas/shared';
 import { TaskManager } from './tasks/task-manager';
-import { GraaspS3FileItemOptions, S3FileItemExtra } from './interfaces/common';
+import { AuthTokenSubject, GraaspS3FileItemOptions, S3FileItemExtra } from './interfaces/common';
 
 export const ITEM_TYPE = 's3File';
 const ORIGINAL_FILENAME_TRUNCATE_LIMIT = 100;
 const randomHexOf4 = () => ((Math.random() * (1 << 16)) | 0).toString(16).padStart(4, '0');
+
+declare module 'fastify' {
+  interface FastifyRequest {
+    authTokenSubject: AuthTokenSubject;
+    member: Member;
+  }
+}
 
 const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, options) => {
   const {
@@ -105,7 +112,7 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
   fastify.post<{ Querystring: ParentIdParam; Body: S3UploadBody }>(
     '/s3-upload',
     { schema: uploadSchema },
-    async ({ member, query: { parentId }, body: { filename }, log }) => {
+    async ({ member, authTokenSubject, query: { parentId }, body: { filename }, log }) => {
       const name = filename.substring(0, ORIGINAL_FILENAME_TRUNCATE_LIMIT);
       const key = `${randomHexOf4()}/${randomHexOf4()}/${randomHexOf4()}-${Date.now()}`;
 
@@ -115,7 +122,10 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
         extra: { s3File: { name: filename, key } },
       };
       // create item
-      const task = taskManager.createCreateTaskSequence(member, itemData, parentId);
+      const task = await options.onFileUploaded(parentId, itemData, {
+        member,
+        token: authTokenSubject,
+      });
       const item = (await runner.runSingleSequence(task, log)) as Item;
 
       // add member and item info to S3 object metadata
@@ -148,11 +158,15 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
   fastify.get<{ Params: IdParam }>(
     '/:id/s3-metadata',
     { schema: getMetadataSchema },
-    async ({ member, params: { id }, log }) => {
-      const t1 = taskManager.createGetTaskSequence(member, id);
-      const t2 = S3FileItemTaskManager.createGetMetadataFromItemTask(member);
-      t2.getInput = () => ({ item: t1[0].result });
-      return runner.runSingleSequence([...t1, t2], log);
+    async ({ member, authTokenSubject, params: { id }, log }) => {
+      const item = (await runner.runSingleSequence(
+        await options.downloadValidation(id, { member, token: authTokenSubject }),
+        log,
+      )) as Item<S3FileItemExtra>;
+
+      const t2 = S3FileItemTaskManager.createGetMetadataFromItemTask(member || { id: authTokenSubject?.member });
+      t2.getInput = () => ({ item });
+      return runner.runSingleSequence([t2], log);
     },
   );
 };
