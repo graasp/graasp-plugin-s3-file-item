@@ -45,4 +45,6 @@ export const PLUGIN_OPTIONS = {
   s3Bucket: 'string',
   s3AccessKeyId: 'string',
   s3SecretAccessKey: 'string',
+  onFileUploaded: () => [],
+  downloadValidation: () => []
 };
