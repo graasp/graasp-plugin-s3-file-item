@@ -5,7 +5,7 @@ import { StatusCodes } from 'http-status-codes';
 import { GRAASP_ACTOR, ITEM_FILE, ITEM_FOLDER, PLUGIN_OPTIONS } from './constants';
 import build from './app';
 import { mockCreateTaskSequence, mockGetTaskSequence } from './mocks';
-import { ITEM_TYPE } from '../src/plugin';
+import { S3_ITEM_TYPE } from '../src/plugin';
 
 let s3Instance;
 const taskManager = new ItemTaskManager();
@@ -96,7 +96,7 @@ describe('Plugin Tests', () => {
       const response = res.json();
       expect(res.statusCode).toBe(StatusCodes.OK);
       expect(response.item.name).toEqual(item.name);
-      expect(response.item.type).toEqual(ITEM_TYPE);
+      expect(response.item.type).toEqual(S3_ITEM_TYPE);
       expect(response.uploadUrl).toContain('string.s3.string.amazonaws.com');
       expect(response.uploadUrl).toContain(item.id);
     });

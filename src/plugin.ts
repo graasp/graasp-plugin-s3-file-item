@@ -6,7 +6,7 @@ import { upload as uploadSchema, getMetadata as getMetadataSchema } from './sche
 import { TaskManager } from './tasks/task-manager';
 import { GraaspS3FileItemOptions, S3FileItemExtra } from './interfaces/common';
 
-export const ITEM_TYPE = 's3File';
+export const S3_ITEM_TYPE = 's3File';
 const ORIGINAL_FILENAME_TRUNCATE_LIMIT = 100;
 const randomHexOf4 = () => ((Math.random() * (1 << 16)) | 0).toString(16).padStart(4, '0');
 
@@ -52,7 +52,7 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
         type: itemType,
         extra: { s3File },
       } = item;
-      if (itemType !== ITEM_TYPE || !s3File) return;
+      if (itemType !== S3_ITEM_TYPE || !s3File) return;
       const { key } = s3File;
       const params: S3.HeadObjectRequest = { Bucket: bucket, Key: key };
       s3.deleteObject(params)
@@ -66,7 +66,7 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
 
   // set up file upload limit
   await fastify.register(graaspFileUploadLimiter, {
-    type: ITEM_TYPE,
+    type: S3_ITEM_TYPE,
     sizePath: 's3File.size',
   });
 
@@ -74,7 +74,7 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
   const copyItemTaskName = taskManager.getCopyTaskName();
   runner.setTaskPreHookHandler<Item<S3FileItemExtra>>(copyItemTaskName, async (item, actor) => {
     const { id, type: itemType, extra: { s3File } = {} } = item; // full copy with new `id`
-    if (!id || itemType !== ITEM_TYPE || !s3File) return;
+    if (!id || itemType !== S3_ITEM_TYPE || !s3File) return;
 
     const { key, contenttype, name } = s3File;
     const metadata: S3.Metadata = { member: actor.id, item: id };
@@ -111,7 +111,7 @@ const plugin: FastifyPluginAsync<GraaspS3FileItemOptions> = async (fastify, opti
 
       const itemData: Partial<Item<S3FileItemExtra>> = {
         name,
-        type: ITEM_TYPE,
+        type: S3_ITEM_TYPE,
         extra: { s3File: { name: filename, key } },
       };
       // create item
