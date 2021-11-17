@@ -17,7 +17,7 @@ export class TaskManager implements S3FileItemTaskManager<Actor> {
     this.options = options;
   }
 
-  getGetMetadataFromItemTask(): string {
+  public static getGetMetadataFromItemTask(): string {
     return GetMetadataFromItemTask.name;
   }
 
