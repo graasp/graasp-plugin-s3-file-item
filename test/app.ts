@@ -1,5 +1,6 @@
 import fastify from 'fastify';
-import { Item, ItemTaskManager, TaskRunner } from 'graasp';
+import { Item, TaskRunner } from 'graasp';
+import { ItemTaskManager } from 'graasp-test';
 import plugin from '../src/index';
 import { GRAASP_ACTOR, PLUGIN_OPTIONS } from './constants';
 

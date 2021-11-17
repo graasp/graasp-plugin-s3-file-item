@@ -11,6 +11,9 @@ module.exports = {
     testMatch: ['**/**/*.test.(ts|js)'],
     testEnvironment: 'node',
     // added for jest to look for the dependencies
-    modulePaths: ['src/']
+    modulePaths: ['src/'],
+    transformIgnorePatterns: [
+      'node_modules/(?!graasp-.*)'
+    ],
   };
   
