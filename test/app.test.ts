@@ -13,10 +13,8 @@ const runner = new TaskRunner();
 
 // Mock graasp-file-upload-limiter to avoid conflict in copy posthook
 jest.spyOn(graaspFileUploadLimiterModule, 'default').mockImplementation(
-  async () => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const a = 1;
-  });
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  async () => { });
 
 describe('Plugin Tests', () => {
   beforeEach(() => {
