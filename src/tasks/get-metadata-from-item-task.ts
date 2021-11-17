@@ -66,6 +66,9 @@ class GetMetadataFromItemTask extends BaseTask<S3FileExtraContent> {
 
       // update data
       await this.itemService.update(id, itemData, handler);
+
+      // this posthook only runs once, when the metadata is updated
+      await this.postHookHandler?.(itemData.extra.s3File, this.actor, { log, handler });
     }
 
     this.status = 'OK';

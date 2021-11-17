@@ -1,9 +1,11 @@
 import { FastifyLoggerInstance } from 'fastify';
-import { Task, TaskStatus, Actor, DatabaseTransactionHandler } from 'graasp';
+import { Task, TaskStatus, Actor, DatabaseTransactionHandler, PreHookHandlerType, PostHookHandlerType } from 'graasp';
 
 export abstract class BaseTask<R> implements Task<Actor, R> {
   protected _result: R;
   protected _message: string;
+  preHookHandler?: PreHookHandlerType<R>;
+  postHookHandler?: PostHookHandlerType<R>;
 
   readonly actor: Actor;
 
